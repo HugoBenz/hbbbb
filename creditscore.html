@@ -1,0 +1,171 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2580
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 <!DOCTYPE html>\
+<html lang="en">\
+<head>\
+  <meta charset="UTF-8" />\
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\
+  <title>Credit Score Dashboard</title>\
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>\
+  <style>\
+    body \{\
+      font-family: Arial, sans-serif;\
+      text-align: center;\
+      padding: 20px;\
+      background-color: #f4f4f9;\
+      color: #333;\
+    \}\
+    h1 \{\
+      color: #5a67d8;\
+    \}\
+    .credit-meter-container \{\
+      margin-top: 20px;\
+    \}\
+    .credit-meter \{\
+      width: 300px;\
+      height: 20px;\
+      background-color: #ddd;\
+      border-radius: 10px;\
+      overflow: hidden;\
+      margin: 20px auto;\
+    \}\
+    .credit-bar \{\
+      height: 100%;\
+      background-color: #48bb78;\
+      width: 0%;\
+      text-align: center;\
+      color: white;\
+      line-height: 20px;\
+      transition: width 0.5s ease-in-out;\
+    \}\
+    #score \{\
+      font-size: 2rem;\
+      margin-top: 20px;\
+    \}\
+    button \{\
+      background-color: #5a67d8;\
+      color: white;\
+      padding: 10px 20px;\
+      border: none;\
+      border-radius: 5px;\
+      cursor: pointer;\
+    \}\
+    button:hover \{\
+      background-color: #434190;\
+    \}\
+    #error \{\
+      color: red;\
+      margin-top: 20px;\
+    \}\
+  </style>\
+</head>\
+<body>\
+  <h1>Credit Score Dashboard</h1>\
+  <p>Connect your wallet to check your credit score.</p>\
+  <button id="connectWallet">Connect Wallet</button>\
+  <div class="credit-meter-container" style="display: none;" id="creditContainer">\
+    <h2>Your Credit Score</h2>\
+    <div class="credit-meter">\
+      <div class="credit-bar" id="creditBar">0</div>\
+    </div>\
+    <p id="score">0</p>\
+  </div>\
+  <p id="error"></p>\
+\
+  <script>\
+    // Your deployed contract address\
+    const CONTRACT_ADDRESS = "0xf8e81D47203A594245E36C48e151709F0C19fBe8";\
+\
+    // ABI for the contract (it tells the page what the contract can do)\
+    const CONTRACT_ABI = [\
+      \{\
+        "inputs": [\{ "internalType": "address", "name": "user", "type": "address" \}],\
+        "name": "getCreditScore",\
+        "outputs": [\{ "internalType": "uint256", "name": "", "type": "uint256" \}],\
+        "stateMutability": "view",\
+        "type": "function"\
+      \}\
+    ];\
+\
+    // Get elements from the page\
+    const connectWalletButton = document.getElementById("connectWallet");\
+    const creditContainer = document.getElementById("creditContainer");\
+    const creditBar = document.getElementById("creditBar");\
+    const scoreText = document.getElementById("score");\
+    const errorText = document.getElementById("error");\
+\
+    let provider, signer, contract;\
+\
+    // Function to connect wallet\
+    async function connectWallet() \{\
+      try \{\
+        // Check if MetaMask is installed\
+        if (!window.ethereum) \{\
+          alert("MetaMask is required to use this feature!");\
+          return;\
+        \}\
+\
+        // Connect to wallet\
+        provider = new ethers.providers.Web3Provider(window.ethereum);\
+        await provider.send("eth_requestAccounts", []);\
+        signer = provider.getSigner();\
+        const userAddress = await signer.getAddress();\
+        console.log("Connected wallet:", userAddress);\
+\
+        // Connect to the smart contract\
+        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);\
+\
+        // Fetch and display the credit score\
+        await getCreditScore(userAddress);\
+      \} catch (err) \{\
+        console.error("Error connecting wallet:", err);\
+        errorText.innerText = "Error connecting wallet. Please try again.";\
+      \}\
+    \}\
+\
+    // Function to fetch credit score\
+    async function getCreditScore(userAddress) \{\
+      try \{\
+        const creditScore = await contract.getCreditScore(userAddress);\
+        console.log("Credit Score:", creditScore.toString());\
+        updateCreditMeter(creditScore.toNumber());\
+      \} catch (err) \{\
+        console.error("Error fetching credit score:", err);\
+        errorText.innerText = "Error fetching credit score. Please try again.";\
+        // Show meter with a score of 0 if fetching fails\
+        updateCreditMeter(0);\
+      \}\
+    \}\
+\
+    // Function to update the credit score meter\
+    function updateCreditMeter(score) \{\
+      // Show the credit meter\
+      creditContainer.style.display = "block";\
+\
+      // Calculate percentage for the meter (assuming max score is 1000)\
+      const percentage = Math.min(score / 1000, 1) * 100;\
+      creditBar.style.width = percentage + "%";\
+      creditBar.innerText = score;\
+      scoreText.innerText = score;\
+\
+      // Change color based on score\
+      if (score >= 750) \{\
+        creditBar.style.backgroundColor = "#48bb78"; // Green for high scores\
+      \} else if (score >= 500) \{\
+        creditBar.style.backgroundColor = "#f6ad55"; // Orange for medium scores\
+      \} else \{\
+        creditBar.style.backgroundColor = "#f56565"; // Red for low scores\
+      \}\
+    \}\
+\
+    // Add click event to the Connect Wallet button\
+    connectWalletButton.addEventListener("click", connectWallet);\
+  </script>\
+</body>\
+</html>\
+}
